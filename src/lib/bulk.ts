@@ -1,7 +1,7 @@
 import { parseQuick } from './quickparse';
 import type { List, Priority } from './types';
 
-export const MAX_TITLE = 80;
+export const MAX_TITLE = 160;
 
 export interface BulkItem {
 	title: string;

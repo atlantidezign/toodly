@@ -17,6 +17,7 @@
 	import { nav, ui } from '../nav.svelte';
 	import { inScope, parseScope, sortTasks } from '../views';
 	import { parseQuick } from '../quickparse';
+	import { requestCreate } from '../quickcreate.svelte';
 	import { addDays, todayISO, toMinutes, formatDayLong } from '../dates';
 	import { mIn } from '../motion';
 	import { drag, dropzone, type DropEvent } from '../dnd.svelte';
@@ -49,14 +50,14 @@
 	});
 	const isRoot = (t: Task) => !t.parent_id || !matchedIds.has(t.parent_id);
 
-	interface Row { task: Task; depth: number; hasChildren: boolean; num: number }
+	interface Row { task: Task; depth: number; sub: number; hasChildren: boolean; num: number }
 	function flatten(roots: Task[], base = 0): Row[] {
 		const out: Row[] = [];
 		// num: posizione progressiva tra i fratelli (stesso livello, i gruppi non contano)
-		const walk = (t: Task, depth: number, num: number) => {
+		const walk = (t: Task, depth: number, num: number, sub = 0) => {
 			const kids = childMap.get(t.id) ?? [];
-			out.push({ task: t, depth, hasChildren: kids.length > 0, num });
-			if (!collapsed.has(t.id)) kids.forEach((k, i) => walk(k, depth + 1, i + 1));
+			out.push({ task: t, depth, sub, hasChildren: kids.length > 0, num });
+			if (!collapsed.has(t.id)) kids.forEach((k, i) => walk(k, depth + 1, i + 1, sub + 1));
 		};
 		roots.forEach((r, i) => walk(r, base, i + 1));
 		return out;
@@ -191,14 +192,14 @@
 		const p = parseQuick(text, store.lists);
 		if (!p.title) return;
 		const t = todayISO();
-		store.createTask({
+		requestCreate({
 			title: p.title,
 			group_id: group.id,
 			tags: scopeTags(p.tags),
 			priority: p.priority || (nav.scope === 'important' ? 3 : 0),
 			list_id: p.list_id ?? (scopeInfo.kind === 'list' ? scopeInfo.id : null),
 			due_date: p.due_date ?? (nav.scope === 'today' ? t : nav.scope === 'next7' ? addDays(t, 1) : null)
-		});
+		}, false);
 		addingIn = null;
 	}
 
@@ -216,13 +217,14 @@
 		const p = parseQuick(text, store.lists);
 		if (!p.title) return;
 		const t = todayISO();
-		store.createTask({
+		// nella Lista il dettaglio non si apre: si può continuare a scrivere task di seguito
+		requestCreate({
 			title: p.title,
 			tags: scopeTags(p.tags),
 			priority: p.priority || (nav.scope === 'important' ? 3 : 0),
 			list_id: p.list_id ?? (scopeInfo.kind === 'list' ? scopeInfo.id : null),
 			due_date: p.due_date ?? (nav.scope === 'today' ? t : nav.scope === 'next7' ? addDays(t, 1) : null)
-		});
+		}, false);
 	}
 
 	// ---- riordino manuale ---------------------------------------------------
@@ -291,7 +293,7 @@
 						<div animate:flip={{ duration: 220 }} in:mIn|local={{ y: -6, duration: 0.22 }}>
 							<TaskRow
 								task={row.task}
-								depth={row.depth}
+								depth={row.depth} sub={row.sub}
 								hasChildren={row.hasChildren}
 								num={row.num}
 								expanded={!collapsed.has(row.task.id)}
@@ -322,7 +324,7 @@
 						{@const row = it.row}
 						<TaskRow
 							task={row.task}
-							depth={row.depth}
+							depth={row.depth} sub={row.sub}
 							hasChildren={row.hasChildren}
 							num={row.num}
 							expanded={!collapsed.has(row.task.id)}
@@ -347,7 +349,7 @@
 				{#if showDone}
 					{#each doneRows as row (row.task.id)}
 						<div animate:flip={{ duration: 220 }} in:mIn|local={{ y: -6, duration: 0.22 }}>
-							<TaskRow task={row.task} depth={row.depth} hasChildren={row.hasChildren} num={row.num} expanded={!collapsed.has(row.task.id)} showList={scopeInfo.kind !== 'list'}
+							<TaskRow task={row.task} depth={row.depth} sub={row.sub} hasChildren={row.hasChildren} num={row.num} expanded={!collapsed.has(row.task.id)} showList={scopeInfo.kind !== 'list'}
 								ontoggleexpand={() => (collapsed.has(row.task.id) ? collapsed.delete(row.task.id) : collapsed.add(row.task.id))} />
 						</div>
 					{/each}

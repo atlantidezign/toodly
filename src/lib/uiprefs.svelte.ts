@@ -1,5 +1,7 @@
 /** Preferenze di interfaccia salvate in localStorage (prefisso `toodly.`: finiscono anche nei backup). */
 const KEY_NUMBERS = 'toodly.showNumbers';
+const KEY_BADGE = 'toodly.badge';
+const KEY_PROMPT_DONE = 'toodly.promptDone';
 const KEY_ECONOMY = 'toodly.showEconomy';
 const KEY_ECO_OFF = 'toodly.economyOff';
 const KEY_REMINDERS = 'toodly.reminders';
@@ -9,7 +11,9 @@ const KEY_DENSITY = 'toodly.density';
 const KEY_SCALE = 'toodly.textScale';
 const KEY_SECTIONS = 'toodly.drawerClosed';
 
-export const uiprefs = $state<{ showNumbers: boolean; showEconomy: boolean; economyOff: string[]; remindersEnabled: boolean; allDayTime: string; tourDone: boolean; closedSections: string[]; density: 'compact' | 'normal' | 'comfy'; textScale: number }>({
+export const uiprefs = $state<{ showBadge: boolean; promptDone: boolean; showNumbers: boolean; showEconomy: boolean; economyOff: string[]; remindersEnabled: boolean; allDayTime: string; tourDone: boolean; closedSections: string[]; density: 'compact' | 'normal' | 'comfy'; textScale: number }>({
+	showBadge: true,
+	promptDone: false,
 	showNumbers: false,
 	showEconomy: false,
 	economyOff: [],
@@ -43,6 +47,8 @@ function applyAppearance() {
 
 function load() {
 	uiprefs.showNumbers = get(KEY_NUMBERS) === '1';
+	uiprefs.promptDone = get(KEY_PROMPT_DONE) === '1';
+	uiprefs.showBadge = get(KEY_BADGE) !== '0';
 	uiprefs.showEconomy = get(KEY_ECONOMY) === '1';
 	try {
 		const off = JSON.parse(get(KEY_ECO_OFF) ?? '[]');
@@ -75,6 +81,16 @@ export function initUiPrefs() {
 	});
 }
 
+/** Cerchietto con i task scaduti o di oggi sull'icona nella barra delle applicazioni. */
+export function setShowBadge(v: boolean) {
+	uiprefs.showBadge = v;
+	put(KEY_BADGE, v ? '1' : '0');
+}
+/** «Crea prompt»: include anche le sotto-attività completate (segnate con una casella spuntata). */
+export function setPromptDone(v: boolean) {
+	uiprefs.promptDone = v;
+	put(KEY_PROMPT_DONE, v ? '1' : '0');
+}
 export function setShowNumbers(v: boolean) {
 	uiprefs.showNumbers = v;
 	put(KEY_NUMBERS, v ? '1' : '0');

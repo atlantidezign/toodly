@@ -16,7 +16,7 @@
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { handleSelectClick, selection, setVisibleOrder } from '../selection.svelte';
-	import { nav, ui } from '../nav.svelte';
+	import { nav, ui, reveal } from '../nav.svelte';
 	import { inScope, sortTasks } from '../views';
 	import { diffDays, todayISO } from '../dates';
 	import { untrack } from 'svelte';
@@ -52,6 +52,7 @@
 	// il task selezionato deve essere visibile: se è fuori dalla strada, avanza fino a lui
 	$effect(() => {
 		const id = ui.selectedTaskId;
+		void reveal.n; // anche quando una proprietà cambia dal pannello
 		if (!id) return;
 		untrack(() => {
 			const tk = store.tasks.find((x) => x.id === id);

@@ -3,7 +3,7 @@
 	import { Switch } from 'bits-ui';
 	import { uiprefs, toggleSection } from '../uiprefs.svelte';
 	import { ensureNotificationPermission } from '../reminders.svelte';
-	import { Timer, Hourglass, Link2, CheckCircle2, Circle, ArrowLeft, FileText, Flag, Paperclip, Plus, Trash2, X, Repeat, Clock, CalendarDays, Layers, FolderOpen, Folder, CalendarPlus, ChartGantt, Bell, ChevronRight, LayoutTemplate, Eye, Hash, Diamond, ALargeSmall, CaseSensitive, CaseUpper, CaseLower } from '@lucide/svelte';
+	import { ClipboardCopy, Timer, Hourglass, Link2, CheckCircle2, Circle, ArrowLeft, FileText, Flag, Paperclip, Plus, Trash2, X, Repeat, Clock, CalendarDays, Layers, FolderOpen, Folder, CalendarPlus, ChartGantt, Bell, ChevronRight, LayoutTemplate, Eye, Hash, Diamond, ALargeSmall, CaseSensitive, CaseUpper, CaseLower } from '@lucide/svelte';
 	import Checkbox from './Checkbox.svelte';
 	import AttachmentPreview from './AttachmentPreview.svelte';
 	import Select from './Select.svelte';
@@ -19,10 +19,12 @@
 	import { formatHours } from '../duration';
 	import DurationField from './DurationField.svelte';
 	import { durationOf } from '../ridge';
-	import { ui, showToast } from '../nav.svelte';
+	import { tick, untrack } from 'svelte';
+	import { ui, showToast, revealTask } from '../nav.svelte';
+	import { buildPrompt } from '../prompt';
 	import { mIn, mOut } from '../motion';
 	import { renderMarkdown } from '../markdown';
-	import { recurrenceDays, parseISO, formatBytes, formatStamp, toMinutes, fromMinutes, todayISO, taskStart } from '../dates';
+	import { recurrenceDays, parseISO, formatBytes, formatStamp, toMinutes, fromMinutes, todayISO, taskStart, addDays, addMonths } from '../dates';
 	import { PRIORITIES, RECURRENCES, STATUSES, type Priority, type Recurrence, type Status } from '../types';
 
 	const task = $derived(ui.selectedTaskId ? store.byId.get(ui.selectedTaskId) : undefined);
@@ -51,7 +53,18 @@
 
 	const groupOptions = $derived([
 		{ value: '', label: tt('Nessun gruppo') },
-		...store.groups.map((g) => ({ value: g.id, label: store.groupPath(g.id) })).sort((a, b) => a.label.localeCompare(b.label))
+		// stesso ordine della Lista: ogni gruppo seguito dai suoi sottogruppi
+		...(() => {
+			const out: { value: string; label: string }[] = [];
+			const walk = (parent: string | null) => {
+				for (const g of store.groupChildren(parent)) {
+					out.push({ value: g.id, label: store.groupPath(g.id) });
+					walk(g.id);
+				}
+			};
+			walk(null);
+			return out;
+		})()
 	]);
 
 	const closed = (k: string) => uiprefs.closedSections.includes(k);
@@ -113,7 +126,7 @@
 
 	let confirmDelete = $state(false);
 	let newNote = $state('');
-	let titleEl = $state<HTMLInputElement>();
+	let titleEl = $state<HTMLTextAreaElement>();
 	let titleDraft = $state('');
 	let lastId = '';
 
@@ -127,6 +140,44 @@
 			if (task.title === 'Nuovo task' || task.title === 'New task') queueMicrotask(() => { titleEl?.focus(); titleEl?.select(); });
 		}
 	});
+
+	/** Il titolo occupa almeno due righe e cresce con il testo. */
+	function fitTitle() {
+		if (!titleEl) return;
+		titleEl.style.height = 'auto';
+		titleEl.style.height = titleEl.scrollHeight + 'px';
+	}
+	$effect(() => {
+		void titleDraft;
+		void task?.id;
+		tick().then(fitTitle);
+	});
+
+	// una proprietà che sposta il task nelle viste (data, gruppo, priorità, stato…) lo porta in vista
+	let posId = '';
+	let posSig = '';
+	$effect(() => {
+		const tk = task;
+		const sig = tk
+			? [tk.due_date, tk.start_date, tk.start_time, tk.end_time, tk.group_id, tk.list_id, tk.parent_id, tk.priority, tk.status, tk.completed, tk.in_gantt, tk.milestone, tk.duration_min, tk.recurrence].join('|')
+			: '';
+		const id = tk?.id ?? '';
+		untrack(() => {
+			if (id && id === posId && sig !== posSig) void revealTask(id);
+			posId = id;
+			posSig = sig;
+		});
+	});
+
+	async function copyPrompt() {
+		if (!task) return;
+		try {
+			await navigator.clipboard.writeText(buildPrompt(task));
+			showToast(tt('Prompt copiato negli appunti'));
+		} catch {
+			showToast(tt('Operazione non riuscita'));
+		}
+	}
 
 	function saveTitle() {
 		if (!task) return;
@@ -165,6 +216,22 @@
 		{ value: '1440', label: tt('1 giorno prima') },
 		{ value: '2880', label: tt('2 giorni prima') }
 	]);
+
+	// Scorciatoie per spostare in avanti la scadenza (attive solo se la data c'è)
+	const dueShifts = $derived([
+		{ key: 'd1', label: tt('+1g'), title: tt('Aggiungi 1 giorno alla scadenza'), days: 1, months: 0 },
+		{ key: 'd3', label: tt('+3g'), title: tt('Aggiungi 3 giorni alla scadenza'), days: 3, months: 0 },
+		{ key: 'd5', label: tt('+5g'), title: tt('Aggiungi 5 giorni alla scadenza'), days: 5, months: 0 },
+		{ key: 'w1', label: tt('+1s'), title: tt('Aggiungi 1 settimana (7 giorni) alla scadenza'), days: 7, months: 0 },
+		{ key: 'm1', label: tt('+1m'), title: tt('Aggiungi 1 mese alla scadenza'), days: 0, months: 1 },
+		{ key: 'y1', label: tt('+1a'), title: tt('Aggiungi 1 anno alla scadenza'), days: 0, months: 12 }
+	]);
+
+	function shiftDue(sh: { days: number; months: number }) {
+		if (!task?.due_date) return;
+		const next = sh.months ? addMonths(task.due_date, sh.months) : addDays(task.due_date, sh.days);
+		store.updateTask(task.id, { due_date: next });
+	}
 
 	function setStartDate(v: string, el: HTMLInputElement) {
 		if (!task) return;
@@ -238,7 +305,7 @@
 
 {#snippet head(key: string, label: string, count: string = '')}
 	<button
-		class="flex w-full items-center gap-1.5 rounded text-left text-[12px] font-semibold tracking-wide text-muted uppercase hover:text-fg"
+		class="flex w-full items-center gap-1.5 rounded text-left text-[12px] font-semibold tracking-wide text-accent uppercase hover:opacity-80"
 		aria-expanded={!closed(key)}
 		onclick={() => toggleSection(key)}
 	>
@@ -260,6 +327,7 @@
 				<button class="btn btn-ghost h-7 px-2" onclick={() => (ui.selectedTaskId = parent.id)}><ArrowLeft size={14} />{parent.title.slice(0, 22)}</button>
 			{/if}
 			<div class="ml-auto flex items-center gap-1">
+				<button class="icon-btn" onclick={copyPrompt} title={tt('Crea prompt')} aria-label={tt('Crea prompt')}><ClipboardCopy size={15} /></button>
 				<button class="icon-btn" onclick={() => { if (task && saveTemplateFrom(task.id)) showToast(tt('Modello salvato')); }} title={tt('Salva come modello')} aria-label={tt('Salva come modello')}><LayoutTemplate size={15} /></button>
 				<button class="btn {confirmDelete ? 'border-p3 text-p3' : 'btn-ghost'} h-7 px-2" onclick={remove} title={tt('Elimina task')}>
 					<Trash2 size={14} />{#if confirmDelete}{tt('Conferma')}{/if}
@@ -277,14 +345,16 @@
 		<div class="flex-1 space-y-5 overflow-y-auto px-5 py-4" data-scroll="y">
 			{#key task.id}
 				<div class="flex items-start gap-2">
-					<input
+					<textarea
 						bind:this={titleEl}
 						bind:value={titleDraft}
+						rows="2"
 						onblur={saveTitle}
-						onkeydown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur(); }}
-						class="min-w-0 flex-1 bg-transparent text-[19px] leading-snug font-semibold outline-none placeholder:text-faint {task.completed ? 'text-muted line-through' : ''}"
+						oninput={() => { titleDraft = titleDraft.replace(/\s*[\r\n]+\s*/g, ' '); fitTitle(); }}
+						onkeydown={(e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); (e.currentTarget as HTMLTextAreaElement).blur(); } }}
+						class="block min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[19px] leading-snug font-semibold outline-none placeholder:text-faint {task.completed ? 'text-muted line-through' : ''}"
 						placeholder={tt('Titolo del task')}
-					/>
+					></textarea>
 					<!-- mousedown bloccato: l'input non perde il focus (e non salva) prima del click -->
 					<div class="flex shrink-0 items-center gap-0.5" role="toolbar" tabindex="-1" aria-label={tt('Maiuscole del titolo')} onmousedown={(e) => e.preventDefault()}>
 						<button class="icon-btn size-6" title={tt('Prima lettera maiuscola')} aria-label={tt('Prima lettera maiuscola')} onclick={() => applyCase('first')}><ALargeSmall size={15} /></button>
@@ -372,6 +442,13 @@
 						store.updateTask(task.id, v ? { due_date: v } : { due_date: null, start_time: null, end_time: null, remind_min: null, recurrence: 'none' });
 					}} />
 					{#if task.due_date}<button class="icon-btn" aria-label={tt('Rimuovi data')} onclick={() => store.updateTask(task.id, { due_date: null, start_time: null, end_time: null, remind_min: null, recurrence: 'none' })}><X size={14} /></button>{/if}
+				</div>
+
+				<span></span>
+				<div class="flex flex-wrap gap-1">
+					{#each dueShifts as sh (sh.key)}
+						<button class="btn btn-ghost !h-6 !px-1.5 text-[11px] disabled:pointer-events-none disabled:opacity-40" disabled={!task.due_date} title={sh.title} aria-label={sh.title} onclick={() => shiftDue(sh)}>{sh.label}</button>
+					{/each}
 				</div>
 
 				<span class="flex items-center gap-1.5 text-muted"><Diamond size={14} />{tt('Traguardo')}</span>

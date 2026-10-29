@@ -447,6 +447,9 @@ class Store {
 		const nextDue = nextOccurrence(t.due_date, t.recurrence);
 		// finita la ripetizione (o regola non valida): niente nuova occorrenza
 		if (nextDue === t.due_date || (t.recur_until && nextDue > t.recur_until)) return;
+		// già presente la prossima occorrenza ancora aperta (es. completa → riapri → completa): non se ne crea un'altra
+		const next0 = nextDue;
+		if (this.tasks.some((x) => x.id !== t.id && !x.completed && x.title === t.title && x.list_id === t.list_id && x.group_id === t.group_id && x.parent_id === t.parent_id && x.recurrence === t.recurrence && x.due_date === next0)) return;
 		const delta = diffDays(nextDue, t.due_date);
 		// le altre date scorrono dello stesso numero di giorni: la durata del task resta invariata
 		const shift = (d: string | null) => (d ? addDays(d, delta) : d);

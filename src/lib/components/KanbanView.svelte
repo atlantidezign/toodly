@@ -12,6 +12,7 @@
 	import { nav, ui } from '../nav.svelte';
 	import { compareManual, inScope, parseScope } from '../views';
 	import { parseQuick } from '../quickparse';
+	import { createAndShow } from '../quickcreate.svelte';
 	import { addDays, todayISO } from '../dates';
 	import { drag, draggable, dropzone, type DropEvent } from '../dnd.svelte';
 	import { mIn } from '../motion';
@@ -67,7 +68,7 @@
 		const p = parseQuick(text, store.lists);
 		if (!p.title) return;
 		const t = todayISO();
-		store.createTask({
+		createAndShow({
 			title: p.title,
 			tags: scopeInfo.kind === 'tag' ? [...p.tags, scopeInfo.id] : p.tags,
 			priority: nav.group === 'priority' ? (Number(col.key) as Priority) : p.priority,

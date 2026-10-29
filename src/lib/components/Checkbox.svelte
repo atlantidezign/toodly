@@ -16,7 +16,8 @@
 	type="button"
 	role="checkbox"
 	aria-checked={checked}
-	aria-label={t('Completa')}
+	aria-label={checked ? t('Riapri') : t('Completa')}
+	title={checked ? t('Riapri') : t('Completa')}
 	class="grid shrink-0 place-items-center rounded-full border-2 transition-colors duration-150 {blocked && !checked ? 'border-dashed' : ''}"
 	style="width:{size}px;height:{size}px;border-color:{color};background:{checked
 		? color

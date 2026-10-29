@@ -7,6 +7,25 @@ The section of the version being released is used as the text of the GitHub rele
 
 ## [Unreleased]
 
+## [1.3.6] - 2026-10-29
+
+### Added
+- **Due date shortcuts** in the task panel: below the *Due date* field, small buttons **+1d, +3d, +5d, +1w, +1m, +1y** (Italian: +1g, +3g, +5g, +1s, +1m, +1a) move the due date forward by 1/3/5 days, 1 week (7 days), 1 month or 1 year. Month and year steps keep the day of the month, or fall back to the last day of the target month. Disabled when the task has no due date; each button has a full description in its tooltip.
+- **Quick create with group picker**: when groups exist, a task typed in the add bar (List, Graph, Orbit, Metro…) opens a small window to choose its **group** from a tree (arrow keys + Enter, double-click also works; the last group used is preselected), plus a **description** and the **priority**. Without groups the task is created at once. Tasks added to a specific group, or from a Kanban column, skip the window.
+- **Create prompt** button in the task panel header: copies to the clipboard, as Markdown, the title, description and notes of the task and, for each sub-task (at any depth), the same fields.
+- **Icon counter**: a small circle on the taskbar icon with the number of open tasks that are overdue or due today, summed over all data sets (red if at least one is overdue, purple otherwise; `99+` above 99). Windows shows it as a taskbar overlay, macOS/Linux as the badge count. Updated every minute and after each change; Settings → Reminders → *Icon counter* turns it off.
+- **Create prompt** can include the completed sub-tasks too (Settings → Prompt, off by default). By default only open sub-tasks are copied; when on, all are copied and each sub-task title carries a Markdown checkbox (`[ ]` to do, `[x]` done).
+
+### Changed
+- **List layout**: the round checkbox now comes before the expand arrow of tasks with sub-tasks, so the checkboxes of tasks at the same level line up on the left; sub-tasks are indented further to the right to stand out.
+- **Settings window** is wider and laid out on two columns with sub-section headings (Appearance, List, Reminders, Economy / System, Shortcuts, Data).
+- **Task panel title** has room for at least two lines and grows with the text; the long-title limit of the bulk import (the rest goes into the description) goes from 80 to 160 characters.
+- **Reveal in views**: changing a property from the task panel that moves the task (date, group, list, priority, status…) now scrolls/pans the current view to it (Gantt, Graph, Orbit, Metro, Cork, Matrix, Grove, Kanban, Road, Ridge, Slot, Mosaic, Calendar, List). A task just created from the add bar is also revealed and, outside the List, its panel opens.
+- The task checkbox circle now has a localized tooltip: *Complete* for open tasks, *Reopen* for completed ones (in all views).
+
+### Fixed
+- **Recurring tasks**: completing, reopening and completing again a repeating task no longer creates a further copy of the next occurrence when an open one already exists.
+
 ## [1.3.5] - 2026-10-20
 
 ### Added
@@ -81,7 +100,8 @@ The section of the version being released is used as the text of the GitHub rele
 ### Added
 - First public version: tasks, sub-tasks, dependencies, lists, groups, filters, List / Kanban / Calendar views, multi-window data sets, tray, Quick Add, backup and restore, Italian and English UI.
 
-[Unreleased]: https://github.com/atlantidezign/toodly/compare/v1.3.5...HEAD
+[Unreleased]: https://github.com/atlantidezign/toodly/compare/v1.3.6...HEAD
+[1.3.6]: https://github.com/atlantidezign/toodly/compare/v1.3.5...v1.3.6
 [1.3.5]: https://github.com/atlantidezign/toodly/compare/v1.3.0...v1.3.5
 [1.3.0]: https://github.com/atlantidezign/toodly/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/atlantidezign/toodly/compare/v1.0.1...v1.2.0

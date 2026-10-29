@@ -1,3 +1,4 @@
+import { tick } from 'svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { Mode, SortMode } from './types';
@@ -77,6 +78,21 @@ export const ui = $state<{ confirm: ConfirmReq | null; selectedTaskId: string | 
 	shortcutsOpen: false,
 	templatesOpen: false
 });
+
+/** Segnale «porta in vista questo task»: le viste con scorrimento o panoramica si riposizionano su di lui. */
+export const reveal = $state<{ id: string | null; n: number }>({ id: null, n: 0 });
+
+/**
+ * Porta in vista un task nella vista corrente (dopo che il modello delle viste si è ricalcolato).
+ * Con `open` ne apre anche il dettaglio: serve per un task appena creato.
+ */
+export async function revealTask(id: string, open = false) {
+	if (open) ui.selectedTaskId = id;
+	await tick();
+	await new Promise<void>((r) => requestAnimationFrame(() => r()));
+	reveal.id = id;
+	reveal.n++;
+}
 
 export interface ToastAction {
 	label: string;

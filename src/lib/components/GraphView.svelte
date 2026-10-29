@@ -10,13 +10,14 @@
 	import GraphGroup from './GraphGroup.svelte';
 	import GraphTask from './GraphTask.svelte';
 	import QuickInput from './QuickInput.svelte';
+	import { requestCreate } from '../quickcreate.svelte';
 	import { buildGraph, depEdges, graphToMermaid, fitScale, paletteStyle, UNGROUPED, type GNode } from '../graph';
 	import { collapsedGroups, expandGroup, loadCollapsed, toggleGroup } from '../groupui.svelte';
 	import { currentWorkspace } from '../db';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { setVisibleOrder } from '../selection.svelte';
-	import { nav, ui, showToast } from '../nav.svelte';
+	import { nav, ui, showToast, reveal } from '../nav.svelte';
 	import { exportGraphMd } from '../exportgraph';
 	import { inScope, parseScope, sortTasks } from '../views';
 	import { parseQuick } from '../quickparse';
@@ -92,7 +93,7 @@
 		const p = parseQuick(text, store.lists);
 		if (!p.title) return false;
 		const today = todayISO();
-		store.createTask({
+		requestCreate({
 			title: p.title,
 			group_id: gid,
 			tags: scopeTags(p.tags),
@@ -348,6 +349,7 @@
 	// un task selezionato fuori dalla vista (tastiera, ricerca…) viene portato al centro
 	$effect(() => {
 		const id = ui.selectedTaskId;
+		void reveal.n; // anche quando una proprietà cambia dal pannello
 		if (!id || !scroller) return;
 		untrack(() => {
 			const n = model.byTask.get(id);
@@ -379,6 +381,7 @@
 		<div
 			bind:this={scroller}
 			use:wheel
+			data-reveal-self
 			class="graph-scroll absolute inset-0 overflow-auto {panning ? 'cursor-grabbing' : 'cursor-grab'}"
 			data-scroll="xy"
 			onscroll={onScroll}

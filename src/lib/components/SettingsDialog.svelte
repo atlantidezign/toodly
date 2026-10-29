@@ -11,7 +11,7 @@
 	import { t as tt, i18n, setLang, type Lang } from '../i18n.svelte';
 	import Select from './Select.svelte';
 	import { ECONOMY_VIEWS } from '../economy.svelte';
-	import { uiprefs, setDensity, setTextScale, setShowNumbers, setShowEconomy, setEconomyIn, setRemindersEnabled, setAllDayTime } from '../uiprefs.svelte';
+	import { uiprefs, setShowBadge, setPromptDone, setDensity, setTextScale, setShowNumbers, setShowEconomy, setEconomyIn, setRemindersEnabled, setAllDayTime } from '../uiprefs.svelte';
 	import { testNotification } from '../reminders.svelte';
 	const ECONOMY_LABELS: Record<string, string> = { list: 'Lista', kanban: 'Kanban', calendar: 'Calendario', gantt: 'Gantt', graph: 'Graph', orbit: 'Orbit', metro: 'Metro', cork: 'Cork', road: 'Road', matrix: 'Matrix', mosaic: 'Mosaic', ridge: 'Ridge', grove: 'Grove', slot: 'Slot', stats: 'Statistiche', sidebar: 'Barra laterale' };
 
@@ -81,169 +81,212 @@
 	const isMac = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform);
 </script>
 
-<Modal bind:open title={tt('Impostazioni')} width={460}>
-	<div class="space-y-5 text-[13px]">
-		<section>
-			<h4 class="mb-2 text-[11.5px] font-semibold tracking-wider text-muted uppercase">{tt('Aspetto')}</h4>
-			<div class="flex rounded-lg bg-hover p-0.5">
-				{#each themes as th}
-					<button
-						class="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md text-[12.5px] font-medium disabled:opacity-40 {!darkOnly && theme.value === th.id ? 'bg-panel shadow-sm' : 'text-muted hover:text-fg'}"
-						disabled={darkOnly}
-						onclick={() => setTheme(th.id)}
-					>
-						<th.icon size={14} />{th.label}
-					</button>
-				{/each}
-			</div>
-			<div class="mt-3 flex items-center gap-3">
-				<div class="flex-1 font-medium">{tt('Tema')}</div>
-				<div class="w-40"><Select value={theme.style} options={styleOptions} onchange={(v) => setThemeStyle(v as ThemeStyle)} /></div>
-			</div>
-			{#if darkOnly}<p class="mt-1.5 text-[12px] text-muted">{tt('Questo tema è sempre scuro')}</p>{/if}
-		</section>
+<Modal bind:open title={tt('Impostazioni')} width={880}>
+	<div class="text-[13px]">
+		<div class="grid items-start gap-x-10 gap-y-6 md:grid-cols-2">
+			<!-- colonna sinistra: aspetto, lista, promemoria, economia -->
+			<div class="space-y-6">
+				<section class="space-y-3">
+					<h4 class="mb-2.5 border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Aspetto')}</h4>
+					<div class="flex rounded-lg bg-hover p-0.5">
+						{#each themes as th}
+							<button
+								class="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md text-[12.5px] font-medium disabled:opacity-40 {!darkOnly && theme.value === th.id ? 'bg-panel shadow-sm' : 'text-muted hover:text-fg'}"
+								disabled={darkOnly}
+								onclick={() => setTheme(th.id)}
+							>
+								<th.icon size={14} />{th.label}
+							</button>
+						{/each}
+					</div>
+					<div class="flex items-center gap-3">
+						<div class="flex-1 font-medium">{tt('Tema')}</div>
+						<div class="w-40"><Select value={theme.style} options={styleOptions} onchange={(v) => setThemeStyle(v as ThemeStyle)} /></div>
+					</div>
+					{#if darkOnly}<p class="text-[12px] text-muted">{tt('Questo tema è sempre scuro')}</p>{/if}
+					<div class="flex items-center gap-3">
+						<div class="flex-1 font-medium">{tt('Lingua')}</div>
+						<div class="w-40"><Select value={i18n.lang} options={languages} onchange={(v) => setLang(v as Lang)} /></div>
+					</div>
+					<div class="flex items-center gap-3">
+						<div class="flex-1 font-medium">{tt("Dimensione dell'interfaccia")}</div>
+						<div class="w-40"><Select value={String(uiprefs.textScale)} options={scaleOptions} onchange={(v) => setTextScale(Number(v))} /></div>
+					</div>
+				</section>
 
-		<section class="flex items-center gap-3">
-			<div class="flex-1 font-medium">{tt('Lingua')}</div>
-			<div class="w-40"><Select value={i18n.lang} options={languages} onchange={(v) => setLang(v as Lang)} /></div>
-		</section>
-
-		<section class="flex items-center gap-3">
-			<div class="flex-1 font-medium">{tt('Densità della lista')}</div>
-			<div class="w-40"><Select value={uiprefs.density} options={densityOptions} onchange={(v) => setDensity(v as 'compact' | 'normal' | 'comfy')} /></div>
-		</section>
-
-		<section class="flex items-center gap-3">
-			<div class="flex-1 font-medium">{tt("Dimensione dell'interfaccia")}</div>
-			<div class="w-40"><Select value={String(uiprefs.textScale)} options={scaleOptions} onchange={(v) => setTextScale(Number(v))} /></div>
-		</section>
-
-		<section class="space-y-2">
-			<div class="flex items-center gap-3">
-				<div class="flex-1">
-					<div class="font-medium">{tt('Notifiche dei promemoria')}</div>
-					<div class="text-[12px] text-muted">{tt('Una notifica di sistema all\'ora del promemoria dei task (finché toodly è in esecuzione, anche nel tray).')}</div>
-				</div>
-				<Switch.Root
-					checked={uiprefs.remindersEnabled}
-					onCheckedChange={setRemindersEnabled}
-					class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent"
+				<section class="space-y-3">
+					<h4 class="mb-2.5 border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Lista')}</h4>
+					<div class="flex items-center gap-3">
+						<div class="flex-1 font-medium">{tt('Densità della lista')}</div>
+						<div class="w-40"><Select value={uiprefs.density} options={densityOptions} onchange={(v) => setDensity(v as 'compact' | 'normal' | 'comfy')} /></div>
+					</div>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt('Numera i task nella lista')}</div>
+							<div class="text-[12px] text-muted">{tt('Mostra un numero progressivo per i task dello stesso livello (i gruppi non contano).')}</div>
+						</div>
+						<Switch.Root
+					checked={uiprefs.showNumbers}
+					onCheckedChange={setShowNumbers}
+					class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent disabled:opacity-40"
 				>
 					<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
 				</Switch.Root>
-			</div>
-			<div class="flex items-center gap-3">
-				<div class="flex-1 text-[12.5px]">{tt('Ora predefinita per i task senza orario')}</div>
-				<input type="time" class="field w-28" value={uiprefs.allDayTime} onchange={(e) => setAllDayTime(e.currentTarget.value)} />
-				<button class="btn" onclick={testNotification}>{tt('Prova')}</button>
-			</div>
-		</section>
+					</div>
+				</section>
 
-		<section class="flex items-center gap-3">
-			<div class="flex-1">
-				<div class="font-medium">{tt('Numera i task nella lista')}</div>
-				<div class="text-[12px] text-muted">{tt('Mostra un numero progressivo per i task dello stesso livello (i gruppi non contano).')}</div>
+				<section class="space-y-3">
+					<h4 class="mb-2.5 border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Promemoria')}</h4>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt('Notifiche dei promemoria')}</div>
+							<div class="text-[12px] text-muted">{tt('Una notifica di sistema all\'ora del promemoria dei task (finché toodly è in esecuzione, anche nel tray).')}</div>
+						</div>
+						<Switch.Root
+					checked={uiprefs.remindersEnabled}
+					onCheckedChange={setRemindersEnabled}
+					class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent disabled:opacity-40"
+				>
+					<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
+				</Switch.Root>
+					</div>
+					<div class="flex items-center gap-3">
+						<div class="flex-1 text-[12.5px]">{tt('Ora predefinita per i task senza orario')}</div>
+						<input type="time" class="field w-28" value={uiprefs.allDayTime} onchange={(e) => setAllDayTime(e.currentTarget.value)} />
+						<button class="btn" onclick={testNotification}>{tt('Prova')}</button>
+					</div>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt("Contatore sull'icona")}</div>
+							<div class="text-[12px] text-muted">{tt("Un cerchietto sull'icona nella barra delle applicazioni con i task scaduti e quelli di oggi, di tutti i set di dati (rosso se c'è qualche scaduto).")}</div>
+						</div>
+						<Switch.Root
+							checked={uiprefs.showBadge}
+							onCheckedChange={setShowBadge}
+							class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent disabled:opacity-40"
+						>
+							<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
+						</Switch.Root>
+					</div>
+				</section>
+
+				<section class="space-y-3">
+					<h4 class="mb-2.5 border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Economia')}</h4>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt('Economia')}</div>
+							<div class="text-[12px] text-muted">{tt('Costo uomo, spese e ricavi stimati (IVA compresa) per task, totali sui gruppi e la vista Budget.')}</div>
+						</div>
+						<Switch.Root
+					checked={uiprefs.showEconomy}
+					onCheckedChange={setShowEconomy}
+					class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent disabled:opacity-40"
+				>
+					<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
+				</Switch.Root>
+					</div>
+					{#if uiprefs.showEconomy}
+						<div>
+							<div class="font-medium">{tt('Dove mostrare gli importi')}</div>
+							<div class="mb-2 text-[12px] text-muted">{tt('La vista Budget è sempre disponibile. Qui scegli le altre viste in cui compaiono chip, totali e margini.')}</div>
+							<div class="grid grid-cols-2 gap-x-4 gap-y-1.5 lg:grid-cols-3">
+								{#each ECONOMY_VIEWS as v (v)}
+									<label class="flex cursor-pointer items-center gap-2 text-[12.5px]">
+										<input type="checkbox" class="size-3.5 accent-[var(--accent)]" checked={!uiprefs.economyOff.includes(v)} onchange={(e) => setEconomyIn(v, e.currentTarget.checked)} />
+										{tt(ECONOMY_LABELS[v])}
+									</label>
+								{/each}
+							</div>
+						</div>
+					{/if}
+				</section>
 			</div>
-			<Switch.Root
-				checked={uiprefs.showNumbers}
-				onCheckedChange={setShowNumbers}
-				class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent"
-			>
-				<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
-			</Switch.Root>
-		</section>
 
-		<section class="flex items-center gap-3">
-			<div class="flex-1">
-				<div class="font-medium">{tt('Economia')}</div>
-				<div class="text-[12px] text-muted">{tt('Costo uomo, spese e ricavi stimati (IVA compresa) per task, totali sui gruppi e la vista Budget.')}</div>
+			<!-- colonna destra: sistema, scorciatoie, dati -->
+			<div class="space-y-6">
+				<section class="space-y-3">
+					<h4 class="mb-2.5 border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Sistema')}</h4>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt("Avvia toodly all'avvio del sistema")}</div>
+							<div class="text-[12px] text-muted">{available ? tt("All'avvio ripristina le finestre aperte, oppure resta nel tray.") : tt('Non disponibile in questo ambiente.')}</div>
+						</div>
+						<Switch.Root
+					checked={autostart}
+					disabled={!available}
+					onCheckedChange={toggleAutostart}
+					class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent disabled:opacity-40"
+				>
+					<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
+				</Switch.Root>
+					</div>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt('Guida introduttiva')}</div>
+							<div class="text-[12px] text-muted">{tt('Rivedi il breve tour delle funzioni principali.')}</div>
+						</div>
+						<button class="btn" onclick={() => { ui.settingsOpen = false; ui.tourOpen = true; }}>{tt('Mostra')}</button>
+					</div>
+				</section>
+
+				<section class="space-y-3">
+					<h4 class="mb-2.5 border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Scorciatoie')}</h4>
+					<dl class="space-y-1.5">
+						<div class="flex justify-between"><dt>{tt('Quick Add (globale)')}</dt><dd><kbd class="rounded border border-border bg-hover px-1.5 py-0.5 text-[11.5px]">{isMac ? '⌘' : 'Ctrl'} + Shift + {tt('Spazio')}</kbd></dd></div>
+						<div class="flex justify-between"><dt>{tt('Nuova finestra')}</dt><dd><kbd class="rounded border border-border bg-hover px-1.5 py-0.5 text-[11.5px]">{isMac ? '⌘' : 'Ctrl'} + N</kbd></dd></div>
+						<div class="flex justify-between"><dt>{tt('Chiudi il pannello di dettaglio')}</dt><dd><kbd class="rounded border border-border bg-hover px-1.5 py-0.5 text-[11.5px]">Esc</kbd></dd></div>
+					</dl>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt('Scorciatoie da tastiera')}</div>
+							<div class="text-[12px] text-muted">{tt('Elenco dei comandi da tastiera (anche con ?).')}</div>
+						</div>
+						<button class="btn" onclick={() => { ui.settingsOpen = false; ui.shortcutsOpen = true; }}>{tt('Mostra')}</button>
+					</div>
+				</section>
+
+				<section class="space-y-3">
+					<h4 class="mb-2.5 border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Prompt')}</h4>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt('Includi le sotto-attività completate')}</div>
+							<div class="text-[12px] text-muted">{tt('In «Crea prompt» di default ci sono solo le sotto-attività da fare. Se attivo ci sono tutte, con una casella Markdown: [ ] da fare, [x] fatta.')}</div>
+						</div>
+						<Switch.Root
+							checked={uiprefs.promptDone}
+							onCheckedChange={setPromptDone}
+							class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent disabled:opacity-40"
+						>
+							<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
+						</Switch.Root>
+					</div>
+				</section>
+
+				<section class="space-y-3">
+					<h4 class="mb-2.5 border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Dati')}</h4>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium">{tt('Set di dati e backup')}</div>
+							<div class="text-[12px] text-muted">{tt('Set di dati, esportazione e importazione (zip).')}</div>
+						</div>
+						<button class="btn" onclick={() => { open = false; ui.dataOpen = true; }}><Database size={14} />{tt('Gestisci…')}</button>
+					</div>
+					<div class="flex items-center gap-3">
+						<div class="flex-1">
+							<div class="font-medium text-p3">{tt('Cancella tutti i dati')}</div>
+							<div class="text-[12px] text-muted">{tt('Elimina definitivamente tutti i set, i task, gli allegati e le preferenze.')}</div>
+						</div>
+						<button class="btn text-p3" onclick={wipeAll}><Eraser size={14} />{tt('Cancella…')}</button>
+					</div>
+				</section>
+
+				<section class="flex flex-col items-start gap-2">
+					<h4 class="mb-0.5 w-full border-b border-border pb-1 text-[11.5px] font-semibold tracking-wider text-accent uppercase">{tt('Applicazione')}</h4>
+					<button class="btn" onclick={() => { open = false; ui.aboutOpen = true; }}><Info size={14} />{tt('Informazioni')}</button>
+					<button class="btn text-p3" onclick={() => quitApp()}><Power size={14} />{tt('Esci da toodly')}</button>
+					<p class="text-[12px] text-muted">{tt("Alla chiusura dell'ultima finestra toodly chiede se uscire o restare nel tray.")}</p>
+				</section>
 			</div>
-			<Switch.Root
-				checked={uiprefs.showEconomy}
-				onCheckedChange={setShowEconomy}
-				class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent"
-			>
-				<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
-			</Switch.Root>
-		</section>
-
-		{#if uiprefs.showEconomy}
-			<section>
-				<div class="font-medium">{tt('Dove mostrare gli importi')}</div>
-				<div class="mb-2 text-[12px] text-muted">{tt('La vista Budget è sempre disponibile. Qui scegli le altre viste in cui compaiono chip, totali e margini.')}</div>
-				<div class="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
-					{#each ECONOMY_VIEWS as v (v)}
-						<label class="flex cursor-pointer items-center gap-2 text-[12.5px]">
-							<input type="checkbox" class="size-3.5 accent-[var(--accent)]" checked={!uiprefs.economyOff.includes(v)} onchange={(e) => setEconomyIn(v, e.currentTarget.checked)} />
-							{tt(ECONOMY_LABELS[v])}
-						</label>
-					{/each}
-				</div>
-			</section>
-		{/if}
-
-		<section class="flex items-center gap-3">
-			<div class="flex-1">
-				<div class="font-medium">{tt('Scorciatoie da tastiera')}</div>
-				<div class="text-[12px] text-muted">{tt('Elenco dei comandi da tastiera (anche con ?).')}</div>
-			</div>
-			<button class="btn" onclick={() => { ui.settingsOpen = false; ui.shortcutsOpen = true; }}>{tt('Mostra')}</button>
-		</section>
-
-		<section class="flex items-center gap-3">
-			<div class="flex-1">
-				<div class="font-medium">{tt('Guida introduttiva')}</div>
-				<div class="text-[12px] text-muted">{tt('Rivedi il breve tour delle funzioni principali.')}</div>
-			</div>
-			<button class="btn" onclick={() => { ui.settingsOpen = false; ui.tourOpen = true; }}>{tt('Mostra')}</button>
-		</section>
-
-		<section class="flex items-center gap-3">
-			<div class="flex-1">
-				<div class="font-medium">{tt("Avvia toodly all'avvio del sistema")}</div>
-				<div class="text-[12px] text-muted">{available ? tt("All'avvio ripristina le finestre aperte, oppure resta nel tray.") : tt('Non disponibile in questo ambiente.')}</div>
-			</div>
-			<Switch.Root
-				checked={autostart}
-				disabled={!available}
-				onCheckedChange={toggleAutostart}
-				class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent disabled:opacity-40"
-			>
-				<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
-			</Switch.Root>
-		</section>
-
-		<section>
-			<h4 class="mb-2 text-[11.5px] font-semibold tracking-wider text-muted uppercase">{tt('Scorciatoie')}</h4>
-			<dl class="space-y-1.5">
-				<div class="flex justify-between"><dt>{tt('Quick Add (globale)')}</dt><dd><kbd class="rounded border border-border bg-hover px-1.5 py-0.5 text-[11.5px]">{isMac ? '⌘' : 'Ctrl'} + Shift + {tt('Spazio')}</kbd></dd></div>
-				<div class="flex justify-between"><dt>{tt('Nuova finestra')}</dt><dd><kbd class="rounded border border-border bg-hover px-1.5 py-0.5 text-[11.5px]">{isMac ? '⌘' : 'Ctrl'} + N</kbd></dd></div>
-				<div class="flex justify-between"><dt>{tt('Chiudi il pannello di dettaglio')}</dt><dd><kbd class="rounded border border-border bg-hover px-1.5 py-0.5 text-[11.5px]">Esc</kbd></dd></div>
-			</dl>
-		</section>
-
-		<section class="flex items-center gap-3">
-			<div class="flex-1">
-				<div class="font-medium">{tt('Dati')}</div>
-				<div class="text-[12px] text-muted">{tt('Set di dati, esportazione e importazione (zip).')}</div>
-			</div>
-			<button class="btn" onclick={() => { open = false; ui.dataOpen = true; }}><Database size={14} />{tt('Gestisci…')}</button>
-		</section>
-
-		<section class="flex items-center gap-3">
-			<div class="flex-1">
-				<div class="font-medium text-p3">{tt('Cancella tutti i dati')}</div>
-				<div class="text-[12px] text-muted">{tt('Elimina definitivamente tutti i set, i task, gli allegati e le preferenze.')}</div>
-			</div>
-			<button class="btn text-p3" onclick={wipeAll}><Eraser size={14} />{tt('Cancella…')}</button>
-		</section>
-
-		<section class="border-t border-border pt-4">
-			<div class="flex flex-wrap gap-2">
-			<button class="btn" onclick={() => { open = false; ui.aboutOpen = true; }}><Info size={14} />{tt('Informazioni')}</button>
-			<button class="btn text-p3" onclick={() => quitApp()}><Power size={14} />{tt('Esci da toodly')}</button>
-			</div>
-			<p class="mt-1.5 text-[12px] text-muted">{tt("Alla chiusura dell'ultima finestra toodly chiede se uscire o restare nel tray.")}</p>
-		</section>
+		</div>
 	</div>
 </Modal>

@@ -6,6 +6,7 @@
 	import { nav, ui } from '../nav.svelte';
 	import { parseScope } from '../views';
 	import { parseQuick } from '../quickparse';
+	import { requestCreate } from '../quickcreate.svelte';
 	import { addDays, todayISO } from '../dates';
 
 	/** Barra di aggiunta delle viste Orbit e Metro: la stessa della Lista e della Graph. */
@@ -14,7 +15,7 @@
 		const p = parseQuick(text, store.lists);
 		if (!p.title) return;
 		const today = todayISO();
-		store.createTask({
+		requestCreate({
 			title: p.title,
 			group_id: null,
 			tags: scopeInfo.kind === 'tag' ? [...p.tags, scopeInfo.id] : p.tags,

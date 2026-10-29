@@ -9,6 +9,7 @@
 	import TourDialog from '../lib/components/TourDialog.svelte';
 	import ShortcutsDialog from '../lib/components/ShortcutsDialog.svelte';
 	import TemplatesDialog from '../lib/components/TemplatesDialog.svelte';
+	import QuickCreateDialog from '../lib/components/QuickCreateDialog.svelte';
 	import { panel, setSidebarWidth, initSidebar, SIDEBAR_DEFAULT } from '../lib/layoutui.svelte';
 	import CloseDialog from '../lib/components/CloseDialog.svelte';
 	import Sidebar from '../lib/components/Sidebar.svelte';
@@ -29,6 +30,7 @@
 	import { startAutoBackup } from '../lib/autobackup.svelte';
 	import { initUiPrefs, uiprefs, setTourDone } from '../lib/uiprefs.svelte';
 	import { startReminders } from '../lib/reminders.svelte';
+	import { startBadge } from '../lib/badge.svelte';
 	import { selection, clearSelection, selectAll } from '../lib/selection.svelte';
 	import { initLang, t as tt } from '../lib/i18n.svelte';
 	import { setWorkspace } from '../lib/db';
@@ -75,6 +77,7 @@
 		initLang();
 		if (!nav.quick) initSidebar();
 		const stopReminders = nav.quick ? () => {} : startReminders();
+		const stopBadge = nav.quick ? () => {} : startBadge();
 		const stopAutoBackup = nav.quick ? () => {} : startAutoBackup();
 		let timer: ReturnType<typeof setTimeout>;
 		let unlisten: (() => void) | undefined;
@@ -180,6 +183,7 @@
 			unlisten?.();
 			unlistenClose?.();
 			stopReminders();
+			stopBadge();
 			stopAutoBackup();
 			clearTimeout(timer);
 			window.removeEventListener('keydown', key);
@@ -264,6 +268,7 @@
 	<TourDialog />
 	<ShortcutsDialog />
 	<TemplatesDialog />
+	<QuickCreateDialog />
 	<ImportDialog />
 	<SetPicker onchosen={openDataset} />
 	<DragGhost />

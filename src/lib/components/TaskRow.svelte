@@ -16,6 +16,7 @@
 	let {
 		task,
 		depth = 0,
+		sub = 0,
 		hasChildren = false,
 		num = 0,
 		expanded = true,
@@ -29,6 +30,7 @@
 	}: {
 		task: Task;
 		depth?: number;
+		sub?: number;
 		hasChildren?: boolean;
 		num?: number;
 		expanded?: boolean;
@@ -75,20 +77,21 @@
 		data-task
 		data-task-id={task.id}
 		class="flex cursor-pointer items-start gap-2 rounded-lg py-[var(--row-py)] pr-3 transition-colors duration-100 hover:bg-hover {selection.has(task.id) ? 'bg-accent/15 ring-1 ring-accent/40 hover:bg-accent/20' : selected ? 'bg-active hover:bg-active' : ''}"
-		style="padding-left:{6 + depth * 26}px"
+		style="padding-left:{6 + depth * 26 + sub * 16}px"
 		onclick={(e) => { if (!handleSelectClick(e, task.id)) ui.selectedTaskId = task.id; else ui.selectedTaskId = null; }}
 	>
 		<span data-grip class="mt-0.5 -mr-1 grid w-4 shrink-0 place-items-center text-faint {sortable ? 'cursor-grab opacity-0 group-hover:opacity-100' : 'opacity-0'}">
 			<GripVertical size={14} />
 		</span>
-		{#if hasChildren}
-			<span class="mt-px grid w-4 shrink-0 place-items-center">
+		<div class="mt-px"><Checkbox checked={struck} {color} {blocked} onchange={toggle} /></div>
+		<!-- freccia dopo il pallino: i pallini dello stesso livello restano allineati a sinistra -->
+		<span class="mt-px -ml-1 grid w-4 shrink-0 place-items-center">
+			{#if hasChildren}
 				<button class="grid place-items-center text-faint hover:text-fg" onclick={(e) => { e.stopPropagation(); ontoggleexpand?.(); }} aria-label={t('Espandi')}>
 					<ChevronRight size={14} class="transition-transform duration-150 {expanded ? 'rotate-90' : ''}" />
 				</button>
-			</span>
-		{/if}
-		<div class="mt-px"><Checkbox checked={struck} {color} {blocked} onchange={toggle} /></div>
+			{/if}
+		</span>
 		{#if uiprefs.showNumbers && num > 0}<span class="mt-px min-w-[1.25em] shrink-0 text-right text-[13px] leading-5 font-semibold text-accent tabular-nums">{num}</span>{/if}
 		<div class="min-w-0 flex-1">
 			<div class="relative inline-block max-w-full transition-opacity duration-300 {struck ? 'opacity-45' : blocked ? 'opacity-70' : ''}">

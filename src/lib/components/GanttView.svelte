@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { ChevronRight, Folder, FolderOpen, Target, Eye, EyeOff, Download, Copy } from '@lucide/svelte';
 	import Checkbox from './Checkbox.svelte';
 	import { t } from '../i18n.svelte';
 	import { locale } from '../i18n.svelte';
 	import { store } from '../store.svelte';
-	import { nav, ui, go, showToast } from '../nav.svelte';
+	import { nav, ui, go, showToast, reveal } from '../nav.svelte';
 	import { uiprefs } from '../uiprefs.svelte';
 	import { currentWorkspace } from '../db';
 	import { collapsedGroups, loadCollapsed, toggleGroup } from '../groupui.svelte';
@@ -473,6 +473,35 @@
 		viewH = scroller.clientHeight;
 		tick().then(() => scrollToToday());
 	});
+	// un task creato o spostato dal pannello (data, gruppo…) viene portato in vista: riga e barra
+	$effect(() => {
+		const n = reveal.n;
+		const id = reveal.id;
+		if (!n || !id) return;
+		untrack(async () => {
+			await tick();
+			await tick();
+			if (!scroller) return;
+			const i = rows.findIndex((r) => r.kind === 'task' && r.id === id);
+			if (i < 0) return;
+			const r = rows[i] as TaskRowT;
+			const top = HEAD_H + ys[i];
+			const bottom = top + heights[i];
+			const st = scroller.scrollTop;
+			let nextTop = st;
+			if (top - HEAD_H < st) nextTop = Math.max(0, top - HEAD_H - 40);
+			else if (bottom > st + scroller.clientHeight) nextTop = bottom - scroller.clientHeight + 40;
+			let nextLeft = scroller.scrollLeft;
+			if (r.range) {
+				const a = x(r.range.s);
+				const b = x(r.range.e) + px;
+				const viewL = scroller.scrollLeft;
+				const viewR = viewL + scroller.clientWidth - LEFT_W;
+				if (a < viewL || b > viewR) nextLeft = Math.max(0, (a + b) / 2 - (scroller.clientWidth - LEFT_W) / 2);
+			}
+			if (nextTop !== st || nextLeft !== scroller.scrollLeft) scroller.scrollTo({ top: nextTop, left: nextLeft, behavior: 'smooth' });
+		});
+	});
 	async function setZoom(z: Zoom) {
 		if (z === zoom) return;
 		const center = (scroller.scrollLeft + (scroller.clientWidth - LEFT_W) / 2) / px;
@@ -550,7 +579,7 @@
 		</div>
 	</div>
 
-	<div bind:this={scroller} class="relative min-h-0 flex-1 overflow-auto" data-scroll="xy" onscroll={onScroll}>
+	<div bind:this={scroller} data-reveal-self class="relative min-h-0 flex-1 overflow-auto" data-scroll="xy" onscroll={onScroll}>
 		{#if rows.length === 0}
 			<p class="sticky left-0 mx-auto mt-24 max-w-[380px] text-center text-[13px] text-muted">{t('Nessun task da mostrare nel Gantt. Aggiungi task con una scadenza, oppure attiva «Mostra esclusi» nella barra in alto.')}</p>
 		{/if}

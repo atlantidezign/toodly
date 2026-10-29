@@ -8,7 +8,7 @@
 	import { ChevronDown, ChevronUp, Inbox, Minus } from '@lucide/svelte';
 	import { fitScale } from '../graph';
 	import { t } from '../i18n.svelte';
-	import { ui } from '../nav.svelte';
+	import { ui, reveal } from '../nav.svelte';
 
 	/**
 	 * Tela comune a Orbit e Metro: area scorrevole con zoom (Ctrl + rotella, cursori), spostamento trascinando lo sfondo,
@@ -200,6 +200,7 @@
 	$effect(() => {
 		const f = focus;
 		void ui.selectedTaskId;
+		void reveal.n; // anche quando una proprietà cambia dal pannello
 		if (!f || !scroller) return;
 		untrack(() => {
 			const x = (f.x + PAD) * s;
@@ -212,7 +213,7 @@
 
 <div class="relative min-h-0 flex-1 border-t border-border">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div bind:this={scroller} use:wheel class="graph-scroll absolute inset-0 overflow-auto {panning ? 'cursor-grabbing' : 'cursor-grab'}" data-scroll="xy" onscroll={onScroll} onpointerdown={panStart}>
+	<div bind:this={scroller} use:wheel data-reveal-self class="graph-scroll absolute inset-0 overflow-auto {panning ? 'cursor-grabbing' : 'cursor-grab'}" data-scroll="xy" onscroll={onScroll} onpointerdown={panStart}>
 		<div class="relative" style="width:{spW}px; height:{spH}px">
 			<div class="absolute origin-top-left" style="left:{PAD * s}px; top:{PAD * s}px; width:{width}px; height:{height}px; transform:scale({s})">
 				{@render children({ s })}

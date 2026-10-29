@@ -12,7 +12,7 @@
 	import { ecoShow, sumOf } from '../economy.svelte';
 	import { store } from '../store.svelte';
 	import { handleSelectClick, selection, setVisibleOrder } from '../selection.svelte';
-	import { nav, ui } from '../nav.svelte';
+	import { nav, ui, reveal } from '../nav.svelte';
 	import { inScope, sortTasks } from '../views';
 	import { addDays, diffDays, formatDayLong, formatDayShort, formatWeekday, todayISO } from '../dates';
 	import { untrack } from 'svelte';
@@ -59,6 +59,7 @@
 	// il task selezionato porta con sé il suo giorno (e sposta la finestra se serve)
 	$effect(() => {
 		const id = ui.selectedTaskId;
+		void reveal.n; // anche quando una proprietà cambia dal pannello
 		if (!id) return;
 		untrack(() => {
 			const tk = store.tasks.find((x) => x.id === id);

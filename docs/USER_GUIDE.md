@@ -69,7 +69,7 @@ Click the checkbox. Completed tasks move to the collapsible **Completed** sectio
 
 Click a task to open it. You can edit:
 
-- **Title** and **Status** (*To Do*, *In Progress*, *Done*). Next to the title, small buttons change its capitalization (first letter only, Each Word, UPPERCASE, lowercase) or clear it. The title is required: if you leave it empty, the previous one is restored.
+- **Title** and **Status** (*To Do*, *In Progress*, *Done*). Next to the title, small buttons change its capitalization (first letter only, Each Word, UPPERCASE, lowercase) or clear it. The title has room for two lines and is required: if you leave it empty, the previous one is restored. The **Create prompt** button in the panel header copies the title, description and notes of the task, and of each sub-task, to the clipboard as Markdown. Only open sub-tasks are included, unless you turn on *Include completed sub-tasks* in Settings → Prompt: then all are copied, each with a `[ ]` / `[x]` checkbox.
 - **Priority**: *High*, *Medium*, *Low*, *None* (shown in red, orange, blue and gray).
 - **Gantt**: a switch to show or hide the task in the Gantt view.
 - **Start** (defaults to the day the task was created; it cannot be after the due date) and **Due date**. Moving the due date before the start moves the start with it.
@@ -322,7 +322,7 @@ Click **Add multiple tasks from text** in the sidebar (or press `Ctrl+Shift+I`) 
 
 - **Plain text**: each non-empty line becomes a task. List markers (`-`, `*`, `1.`) and checkboxes are ignored. The `!high @tomorrow #list` shortcuts work on every line.
 - **Markdown**: lines starting with `#`, `##`, `###`… create groups and sub-groups (the number of `#` is the depth). The lines below a heading go into that group until the next heading. A heading with the name of an existing group reuses it.
-- **Long titles** (over 80 characters) are shortened at the end of a sentence or word, and the rest goes into the task description.
+- **Long titles** (over 160 characters) are shortened at the end of a sentence or word, and the rest goes into the task description.
 
 A preview tells you how many tasks and groups will be created. The reverse is also possible: **Export to .md** on a list saves its tasks in a Markdown file that you can import again.
 
@@ -434,6 +434,7 @@ Open **Settings** from the sidebar.
 - **Search**: press `Ctrl+K` (or the magnifier in the header), type, narrow by list or priority, use ↑ ↓ and Enter to open a task.
 - **Undo**: `Ctrl+Z` reverts the last operations, even deletions; right after deleting you can click *Undo* in the notice. `Ctrl+Y` redoes.
 - **Reminders**: open a task and choose *Reminder* (it needs a due date; without a start time the default time from Settings is used). Allow notifications if the system asks. Notifications arrive while toodly is running, also in the tray.
+- **Icon counter**: the toodly icon in the taskbar shows a small circle with the number of open tasks that are overdue or due today, summed over all your data sets (red if at least one is overdue, purple otherwise). It updates every minute and after each change; turn it off in Settings → Reminders. On Windows it is a taskbar overlay, on macOS and Linux the badge count.
 - **Statistics**: the chart icon at the bottom of the sidebar.
 - **Tour**: Settings → *Getting started* shows the welcome tour again.
 

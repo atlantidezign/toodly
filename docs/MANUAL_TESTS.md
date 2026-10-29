@@ -16,6 +16,14 @@ Known gaps and future work are in [ROADMAP.md](ROADMAP.md).
 - [ ] Backup (*Data*): automatic backup folder, *Run now*, pruning of old `toodly-auto-*.zip`; restore; `.ics` export opened in a calendar.
 
 ## Editing
+- [ ] Add bar with groups: type a title + Enter → group window (↑↓ choose, Enter creates, Esc cancels); description and priority are applied; without groups the task is created at once; from a group's own add field or a Kanban column no window; opens the panel in Graph/Orbit/Metro, not in the List.
+- [ ] Reveal: change due date / group / priority from the panel with the view scrolled elsewhere (Gantt, Graph, Orbit, Kanban, Calendar, Slot, Ridge…) and check that the view moves to the task; a task created from the add bar is shown too.
+- [ ] *Create prompt* in the panel: paste into a text editor, check title, description, notes and sub-tasks (nested) in Markdown.
+- [ ] Icon counter: with overdue / due-today tasks the taskbar icon shows the number (red with overdue, purple otherwise, `99+` cap); it sums all data sets, drops when completing tasks, disappears at 0 or when switched off in Settings.
+- [ ] Create prompt: default only open sub-tasks; with Settings → Prompt on, all sub-tasks with `[ ]` / `[x]`.
+- [ ] List: the checkbox comes before the expand arrow, checkboxes of the same level line up, sub-tasks are indented further.
+- [ ] Settings window: two columns with sub-section headings, one column when narrow.
+- [ ] Task panel title: long title wraps on 2+ lines, Enter saves, the case buttons still work.
 - [ ] Undo / redo (`Ctrl+Z`, `Ctrl+Y`): delete a task with attachments, undo, redo.
 - [ ] Templates: save from a task with sub-tasks, use with another date, undo.
 - [ ] Tags: `#tag` / `+tag` in Quick Add, tag view, tag filter.

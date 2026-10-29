@@ -14,7 +14,32 @@
 	import GroveView from '../lib/components/GroveView.svelte';
 	import SlotView from '../lib/components/SlotView.svelte';
 	import BudgetView from '../lib/components/BudgetView.svelte';
-	import { nav } from '../lib/nav.svelte';
+	import { tick, untrack } from 'svelte';
+	import { nav, reveal } from '../lib/nav.svelte';
+	import { store } from '../lib/store.svelte';
+	import { expandGroup } from '../lib/groupui.svelte';
+
+	// «porta in vista»: apre i gruppi che nascondono il task e scorre fino a lui nelle viste a scorrimento semplice
+	// (Lista, Kanban, Mosaic, Ridge, Road, Slot…). Gantt, Graph e le mappe si riposizionano da sole (data-reveal-self).
+	$effect(() => {
+		const n = reveal.n;
+		const id = reveal.id;
+		if (!n || !id) return;
+		untrack(async () => {
+			const task = store.byId.get(id);
+			if (!task) return;
+			let g = task.group_id ? store.groupsById.get(task.group_id) : undefined;
+			while (g) {
+				expandGroup(g.id);
+				g = g.parent_id ? store.groupsById.get(g.parent_id) : undefined;
+			}
+			await tick();
+			await tick();
+			const el = document.querySelector<HTMLElement>(`[data-task-id="${CSS.escape(id)}"]`);
+			if (!el || el.closest('[data-reveal-self], [data-drawer]')) return;
+			el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+		});
+	});
 </script>
 
 {#if nav.mode === 'kanban'}
